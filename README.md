@@ -7,8 +7,10 @@ Push only to the branches pertaining to the specific module.
 Place your code within a folder that uses your first name.
 
 Name your files with the following naming scheme:
-'firstname_scraper'
-'firstname_EDA'
+
+- 'firstname_scraper'
+
+- 'firstname_EDA'
 
 ---
 ---
