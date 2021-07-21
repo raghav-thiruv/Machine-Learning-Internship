@@ -36,3 +36,8 @@ Pertains to mini-application creation.
 - git push (Pushes your current changes on your local repository to the GitHub repository)
 - git pull (Pulls the current changes on the GitHub repository to your local repository)
 - git checkout BRANCH_NAME (Used for switching branches)
+
+---
+---
+## **Tips**
+Before pushing your code, make sure that the GitHub repository branch you are attempting to push to looks the same as your local repository. If it does not, first pull from the GitHub repository so that you have the new files. Then, after pulling, push the content you changed.
