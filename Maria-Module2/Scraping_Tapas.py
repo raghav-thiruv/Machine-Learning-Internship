@@ -14,11 +14,11 @@ class WebScraper:
     topic_df = pd.DataFrame(columns=[
         'Topic Title',
         'Category',
-        'Tags',
         'Leading Post',
         'Post Replies',
-        'Created_at'
-
+        'First Post Date',
+        'Num Views',
+        'Num Replies'
     ])
 
     def __init__(self, webdriverPath):
@@ -29,10 +29,10 @@ class WebScraper:
         self.browser = Firefox(options=opts, executable_path= webdriverPath)
 
     def get_topic_title_details(self, topic_soup):
-        """
-        Get topic title, category and tags
-        """
 
+        """
+        Get topic title and the category
+        """
         topic_title = topic_soup.find('a', class_='fancy-title').text.strip()
 
         title_wraper = topic_soup.find('div', class_='title-wrapper')
@@ -51,18 +51,16 @@ class WebScraper:
             topic_category = ''
             topic_tags = ''
 
+        return topic_title, topic_category
 
-        return topic_title, topic_category, topic_tags
 
     def get_topic_comments(self, topic_soup):
         """
         Get topic leading post and its replies.
         """
-        print( "GOT THE TOPIC COMMENTS")
 
         postStream = topic_soup.find('div', class_='post-stream')
         postsDivs = postStream.find_all('div', {'class': ['topic-post clearfix topic-owner regular', 'topic-post clearfix regular']})
-
         comments = []
         for i in range(len(postsDivs)):
             comment = postsDivs[i].find('div', class_='cooked').text
@@ -81,10 +79,7 @@ class WebScraper:
     def get_topic_created_at(self, topic_soup):
         """
         Get the topic creation date
-
         """
-        print( "GOT THE CREATION DATE")
-
         created = topic_soup.find('a', class_ = "post-date")
 
         if created is None:
@@ -93,6 +88,7 @@ class WebScraper:
           created_at = created.find('span', class_ = "relative-date")['title']
 
         return created_at
+
 
     def test(self, BASE_URL, SITE_NAME):
         """
@@ -103,20 +99,17 @@ class WebScraper:
         print(BASE_URL)
 
 
-        # Get all the categories link
+        # Make a list of the links to all the categories
         categ_links = self.browser.find_elements_by_css_selector('.category div > h3 > a')
         categ_urls = []
         for link in categ_links:
             categ_urls.append(link.get_attribute('href'))
 
-
         # Go over each category url
-        for i in range(len(categ_urls)):
-
-
+        for category_count, categ_url in enumerate(categ_urls):
+            if category_count > 0 : break
             # Load the entire webage by scrolling to the bottom
             lastHeight = self.browser.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-
 
             while (True):
                 # Scroll to bottom of page
@@ -132,49 +125,62 @@ class WebScraper:
 
                 lastHeight = newHeight
 
+            # Generate soup of the category page
+
             self.browser.get(categ_url)
+            self.browser.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+            time.sleep(3)
+            categ_topic_soup = BeautifulSoup(self.browser.page_source, 'html.parser')
 
 
-            # Generate category soup
-            categoryHTML = self.browser.page_source
-            categ_topic_soup = BeautifulSoup(categoryHTML, 'html.parser')
-
-            categ_topic_links = categ_topic_soup.find_all('a', class_='title')
-
-
-            topic_stats = {}
-            topic_urls = []
-            for link in categ_topic_links:
-                topic_urls.append(link['href'])
+            # while still on category page, get num views and num replies (they're)
+            # in a table.
+            rows = categ_topic_soup.find("table").find("tbody").find_all("tr")
+            replies = []
+            views = []
+            for row in rows:
+                cells = row.find_all("td")
+                replies.append(cells[2]['title'])
+                views.append(cells[3].text)
 
             # Get all the topic urls inside the current category
+            categ_topic_links = categ_topic_soup.find_all('a', class_='title')
+
             categ_topic_urls = []
             for topic_link in categ_topic_links:
                 categ_topic_urls.append(BASE_URL + topic_link['href'])
 
             # Loop through all the topics in the current category
             for j in range(len(categ_topic_urls)):
-                # Get current topic_soup
+
+                # Get current topic soup
                 categ_topic_url = categ_topic_urls[j]
                 self.browser.get(categ_topic_url)
                 topicHTML = self.browser.page_source
                 topic_soup = BeautifulSoup(topicHTML, 'html.parser')
-                categ_topic_soup = BeautifulSoup(categoryHTML, 'html.parser')
 
 
-                # Scrape all topic attributes of interest
-                topic_title, topic_category, topic_tags = self.get_topic_title_details(topic_soup)
+                # Scrape the title, category, leading_comments, other comments,
+                # and date created. Selenium + webdriver navigates to the topic
+                # link itself for this part.
+                topic_title, topic_category = self.get_topic_title_details(topic_soup)
                 leading_comment, other_comments = self.get_topic_comments(topic_soup)
                 created_at = self.get_topic_created_at(topic_soup)
 
                 # Attribute dictionary for each topic in a category
+
+                # (num_views and num_replies are stored in a list, where j is
+                # the topic number)
+
+
                 attribute_dict = {
                             'Topic Title': topic_title,
                             'Category': topic_category,
-                            'Tags': topic_tags,
                             'Leading Post': leading_comment,
                             'Post Replies': other_comments,
-                            'Created_at': created_at
+                            'First Post Date': created_at,
+                            'Num Views': views[j],
+                            'Num Replies': replies[j]
                             }
 
 
@@ -187,6 +193,7 @@ class WebScraper:
                 print('URL :', categ_topic_url)
 
 
+
         timeStamp = datetime.now().strftime('%Y%m%d%H%M%S')
         print(timeStamp)
 
@@ -196,9 +203,7 @@ class WebScraper:
 
         jsonFileFullPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), jsonFilename)
         csvFileFullPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), csvFilename)
-        # Save scraped data  into json file
-        #with open(jsonFileFullPath, 'w') as f:
-        #  json.dump(self.topic_dict, f)
+
 
         # Save dataframe into csv file
         self.topic_df.to_csv(csvFileFullPath)
