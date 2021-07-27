@@ -71,7 +71,7 @@ class Scraper:
                              })
 
         browser.close()
-        self.to_csv(data, self._csvpath)
+        self.to_csv(data, self.csvpath)
 
     def browser_setup(self):
         """ Sets up browser and options """
