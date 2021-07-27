@@ -115,9 +115,7 @@ class Scraper:
     @staticmethod
     def get_topic_soup(browser):
         """ Gets page HTML as a BeautifulSoup object """
-        while (browser.execute_script(
-                "window.scrollTo(0,document.body.scrollHeight)")):
-            pass
+        self.infinite_scroll(browser)
         return BeautifulSoup(browser.page_source, 'html.parser')
 
     @staticmethod
