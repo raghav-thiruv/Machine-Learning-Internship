@@ -48,8 +48,8 @@ if __name__ == '__main__':
     train["stopwords"] = train["Original Post"].apply(
         lambda x: len([x for x in str(x).split() if x in stop]))
     # print(train[["Original Post", "stopwords"]].head())
-    """ Pre-processing """
 
+    """ PRE-PROCESSING """
     train = train.drop(train[train["Original Post"] == "Aberrant HTML"].index)
     # print(len(train))
 
