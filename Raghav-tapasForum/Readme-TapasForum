@@ -1,0 +1,27 @@
+#Tapas-forum.CSV
+#Author: Raghav Thiruvallur
+
+Purpose:
+
+1. Scrape the tapas website, "https://forums.tapas.io/"
+2. Find the number of views for the categories: collaborations, promotions, offtopic_views
+3. Show the output in a csv file, in a tabular format
+
+Prerequesistes to run the program:
+
+1. Have python 2.7 version or more
+2. beautifulsoup
+3. requests
+
+How to execute this program:
+
+>> Python3 tapas-forum.py
+Program creates tapas.csv file and outputs the results
+
+What does the program do?
+
+- program scrapes using bs4, gets the html contents
+- finds all the <span> elements from the html page, and populates a string array
+- it then traverses the string array, and looks for a specific category, and takes the view SPAN attributes
+- it searches the entire string array and increments the view count
+- it creates the csv file, and outputs the results in a tabular format
